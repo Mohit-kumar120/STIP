@@ -32,15 +32,59 @@ public class DataSeeder implements CommandLineRunner {
         }
     }
 
-    private void seed(String username, String email, String password, Role role) {
-        String e = email.toLowerCase();
-        if (userRepository.existsByEmail(e)) return;
-        User u = new User();
-        u.setUsername(username);
-        u.setEmail(e);
-        u.setPasswordHash(passwordEncoder.encode(password));
-        u.setRole(role);
-        userRepository.save(u);
-        System.out.println("Seeded " + role + " user: " + e);
+    
+private void seed(String username, String email, String password, Role role) {
+
+    String normalizedEmail = email.toLowerCase().trim();
+
+    var existingUser = userRepository.findByEmail(normalizedEmail);
+
+    if (existingUser.isPresent()) {
+
+        User user = existingUser.get();
+
+        // Never overwrite an existing ADMIN account.
+        if (role == Role.ADMIN) {
+            System.out.println("Existing ADMIN preserved: " + normalizedEmail);
+            return;
+        }
+
+        // Update the existing ANALYST credentials.
+        if (role == Role.ANALYST) {
+
+            if (password == null || password.isBlank()) {
+                throw new IllegalStateException(
+                    "INGEST password is missing"
+                );
+            }
+
+            user.setPasswordHash(
+                passwordEncoder.encode(password)
+            );
+
+            user.setRole(Role.ANALYST);
+
+            userRepository.save(user);
+
+            System.out.println(
+                "Updated ANALYST credentials: " + normalizedEmail
+            );
+        }
+
+        return;
     }
+
+    // Create user only if it does not already exist.
+    User user = new User();
+
+    user.setUsername(username);
+    user.setEmail(normalizedEmail);
+    user.setPasswordHash(passwordEncoder.encode(password));
+    user.setRole(role);
+
+    userRepository.save(user);
+
+    System.out.println("Seeded " + role + " user: " + normalizedEmail);
+}
+
 }
