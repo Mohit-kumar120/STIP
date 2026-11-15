@@ -1,0 +1,15 @@
+module.exports = {
+  port: process.env.PORT || 5000,
+  coreApiUrl: process.env.CORE_API_URL || 'http://localhost:8081',
+  email: process.env.INGEST_EMAIL || 'ingestion@stip.local',
+  password: process.env.INGEST_PASSWORD || 'Ingest@12345',
+  intervalMin: Number(process.env.INGEST_INTERVAL_MIN || 60),
+  maxPerFeed: Number(process.env.MAX_PER_FEED || 50),
+  kevDays: Number(process.env.KEV_DAYS || 30),
+  triggerKey: process.env.INGEST_TRIGGER_KEY || '',
+  ollamaUrl: process.env.OLLAMA_URL || 'http://localhost:11434',
+  ollamaModel: process.env.OLLAMA_MODEL || 'llama3.2:3b',
+  ollamaTimeoutMs: Number(process.env.OLLAMA_TIMEOUT_MS || 180000),
+  enrichBatch: Number(process.env.ENRICH_BATCH || 5),
+  enrichIntervalMin: Number(process.env.ENRICH_INTERVAL_MIN || 3),
+};

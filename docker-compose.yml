@@ -1,0 +1,74 @@
+services:
+  mongodb:
+    image: mongo:7
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - stip-net
+
+  ollama:
+    image: ollama/ollama
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - stip-net
+
+  core-api:
+    build: ./core-api
+    container_name: core-api
+    ports:
+      - "8081:8080"
+    depends_on:
+      - mongodb
+    environment:
+      - SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017/stip
+      - OLLAMA_URL=http://ollama:11434
+      - OLLAMA_MODEL=llama3.2:3b
+      - JWT_SECRET=${JWT_SECRET}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+    networks:
+      - stip-net
+
+  ingestion-service:
+    build: ./ingestion-service
+    container_name: ingestion-service
+    ports:
+      - "5000:5000"
+    depends_on:
+      - mongodb
+      - core-api
+      - ollama
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017/stip
+      - CORE_API_URL=http://core-api:8080
+      - INGEST_EMAIL=ingestion@stip.local
+      - INGEST_PASSWORD=${INGEST_PASSWORD}
+      - INGEST_INTERVAL_MIN=60
+      - OLLAMA_URL=http://ollama:11434
+      - OLLAMA_MODEL=llama3.2:3b
+    networks:
+      - stip-net
+
+  frontend:
+    build: ./frontend
+    container_name: frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - core-api
+      - ingestion-service
+    networks:
+      - stip-net
+
+networks:
+  stip-net:
+
+volumes:
+  mongo_data:
+  ollama_data:
